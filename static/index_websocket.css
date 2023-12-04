@@ -78,3 +78,8 @@ div>span{
 span.value {
     font-size:90px;
 }
+
+img.image {
+    max-width: 30%;
+    height: auto;
+}
