@@ -1,6 +1,12 @@
 /*
-Generate patterned sensor data and send(Parent Process) with IPC to the other process(Child Process)
+Description : Generate patterned sensor data and send(Parent Process) with IPC to the other process(Child Process)
 IPC Method : PIPE(Half-Duplex)
+How to compile and build :
+1. Set up Shared Library Path
+  a. sudo find / -name libpaho-mqtt3c.so.1
+    ex) /home/user/Lib/paho.mqtt.c/build/src/libpaho-mqtt3c.so.1
+  b. export LD_LIBRARY_PATH=/home/user/Lib/paho.mqtt.c/build/src:$LD_LIBRARY_PATH
+2. gcc -o virtual_sensor_data_generator virtual_sensor_data_generator.c -lpaho-mqtt3c
 */
 
 #include <stdio.h>
@@ -12,48 +18,17 @@ IPC Method : PIPE(Half-Duplex)
 #include <sys/wait.h>
 #include <sys/ipc.h>
 
-#include <mariadb/mysql.h>
-// #include <mqtt/MQTTClient.h>
+/*
+git clone https://github.com/eclipse/paho.mqtt.c.git
+cd paho.mqtt.c
+cmake -Bbuild -H. -DPAHO_WITH_SSL=ON
+sudo cmake --build build --target install
+*/
 #include <MQTTClient.h>
-
-// MariaDB Connection parameters^M
-#define DB_HOST "localhost"
-#define DB_USER "scott"
-#define DB_PASSWORD "tiger"
-#define DB_NAME "mydb"
+// #include <mqtt/MQTTClient.h>
 
 #define MQTT_BROKER_ADDRESS "tcp://localhost:1883"
 #define MQTT_CLIENT_ID "temperature_sensor_client"
-#define MQTT_TOPIC "sensor/temp"
-
-
-void saveToMariaDB(int SID, const char *value)
-{
-    MYSQL *conn = mysql_init(NULL);
-
-    if (conn == NULL)
-    {
-        fprintf(stderr, "mysql_init() failed\n");
-        exit(EXIT_FAILURE);
-    }
-
-    if (mysql_real_connect(conn, DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, 0, NULL, 0) == NULL)
-    {
-        fprintf(stderr, "mysql_real_connect() failed\n");
-        mysql_close(conn);
-        exit(EXIT_FAILURE);
-    }
-
-    char query[256];
-    sprintf(query, "INSERT INTO SensorData (sensor_id, reading, timestamp) VALUES (%d, '%s', sysdate())", SID, value);
-
-    if (mysql_query(conn, query) != 0)
-    {
-        fprintf(stderr, "MariaDB query execution failed: %s\n", mysql_error(conn));
-    }
-
-    mysql_close(conn);
-}
 
 void sendToMQTT(char *topic, const char *value)
 {
@@ -85,7 +60,8 @@ void sendToMQTT(char *topic, const char *value)
 int main()
 {
     srand(time(NULL));
-    // char senval[2][10];
+    // char senval[3][8];
+    char topics[3][12] = {"Temperature", "Humidity", "CO2"};
 
     int pipefd[2];
     pid_t child_pid;
@@ -118,36 +94,28 @@ int main()
             if (read(pipefd[0], receivedString, sizeof(receivedString)) > 0)
             {
                 // Process the received string value
-                // receivedString[strcspn(receivedString, "\n")] = 0;
+                receivedString[strcspn(receivedString, "\n")] = 0;
                 printf("Consumer received: %s\n", receivedString);
 
-                // char *token = strtok((char *)receivedString, ":");
+                char *token = strtok((char *)receivedString, ":");
 
                 // Keep printing tokens while one of the
                 // delimiters present in str[].
 
-                // int i = 0;
-                // while (token != NULL)
-                // {
-                //     strcpy(senval[i], token);
-                //     printf("%s\n", token);
-                //     token = strtok(NULL, ":");
-                //     i++;
-                // }
+                int i = 0;
+                while (token != NULL)
+                {
+                    strcpy(senval[i], token);
+                    printf("%s\n", token);
+                    token = strtok(NULL, ":");
+                    i++;
+                }
 
-                // for (int i = 0; i < 2; i++)
-                // {
-                //     // Save to MariaDB
-                //     // saveToMariaDB(receivedString);
-                //     saveToMariaDB((i + 1), senval[i]);
-
-                //     // Send to MQTT
-                //     // sendToMQTT(receivedString);
-                //     sendToMQTT(topics[i], senval[i]);
-                // }
-
-                saveToMariaDB(1, receivedString);
-                sendToMQTT(MQTT_TOPIC, receivedString);
+                for (int i = 0; i < 3; i++)
+                {
+                    // Send to MQTT
+                    sendToMQTT(topics[i], senval[i]);
+                }
             }
         }
 
@@ -158,6 +126,8 @@ int main()
     {
         // Parent process (virtual_sensor_data_generator)
         double temperature = 0.0f;
+        double humidity = 0.0f;
+        double CO2 = 0.0f;
 
         // Close read end of the pipe
         close(pipefd[0]);
@@ -168,9 +138,10 @@ int main()
         // Generate random sensor data
         while(1) 
         {
-            // printf("%.2f:%.0f\n", temperature, humidity);
-            temperature = (double)((rand() % 1201) - 600) / 100; // -6.00'C ~ 6.00'C
-            printf("%.2f\n", temperature);
+            temperature = (double)((rand() % 1401) + 1500) / 100; // 15.00'C ~ 29.00'C
+            humidity = (rand() % 36) + 60; // 60% ~ 95%
+            CO2 = (rand() % 401) + 800; // 800ppm ~ 1200ppm
+            printf("%.2f:%.0f:%.0f\n", temperature, humidity, CO2);
             fflush(stdout);
             sleep(1);
         }
