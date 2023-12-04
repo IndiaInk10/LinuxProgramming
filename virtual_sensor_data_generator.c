@@ -2,11 +2,16 @@
 Description : Generate patterned sensor data and send(Parent Process) with IPC to the other process(Child Process)
 IPC Method : PIPE(Half-Duplex)
 How to compile and build :
-1. Set up Shared Library Path
+1. Install paho.mqtt.c
+  a. git clone https://github.com/eclipse/paho.mqtt.c.git
+  b. cd paho.mqtt.c
+  c. cmake -Bbuild -H. -DPAHO_WITH_SSL=ON
+  d. sudo cmake --build build --target install
+2. Set up Shared Library Path
   a. sudo find / -name libpaho-mqtt3c.so.1
     ex) /home/user/Lib/paho.mqtt.c/build/src/libpaho-mqtt3c.so.1
   b. export LD_LIBRARY_PATH=/home/user/Lib/paho.mqtt.c/build/src:$LD_LIBRARY_PATH
-2. gcc -o virtual_sensor_data_generator virtual_sensor_data_generator.c -lpaho-mqtt3c
+3. gcc -o virtual_sensor_data_generator virtual_sensor_data_generator.c -lpaho-mqtt3c
 */
 
 #include <stdio.h>
@@ -30,7 +35,7 @@ sudo cmake --build build --target install
 #define TIME_STRING_LENGTH 20
 
 #define MQTT_BROKER_ADDRESS "tcp://localhost:1883"
-#define MQTT_CLIENT_ID "temperature_sensor_client"
+#define MQTT_CLIENT_ID "sensor_client"
 
 char* get_current_time_string() {
     time_t current_time;
