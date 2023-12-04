@@ -19,7 +19,6 @@ def on_message(client, userdata, message):
         sensor_id = sensor_type.index(message.topic)
         reading = data['reading']
 
-
         db_connection = pymysql.connect(host=db_host,user=db_user,password=db_password,database=db_name)
         cursor = db_connection.cursor()
 
@@ -32,7 +31,7 @@ def on_message(client, userdata, message):
     except Exception as e:
         print(f"Error:{e}")
 
-broker_address = 'tcp://localhost'
+broker_address = 'localhost'
 broker_port = 1883
 
 db_host = 'localhost'
@@ -44,6 +43,7 @@ table_name = 'SensorData'
 mqtt_client = mqtt.Client()
 mqtt_client.connect(broker_address, broker_port)
 
-mqtt_client.subscribe(topic)
+for i in range(3):
+    mqtt_client.subscribe(sensor_type[i])
 mqtt_client.on_message = on_message
-mqtt_client.loop_start()
+mqtt_client.loop_forever()

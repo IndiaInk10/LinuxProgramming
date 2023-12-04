@@ -1,4 +1,4 @@
-const socket=io.connect('http://localhost:5001');
+const socket=io.connect('http://localhost:5000');
 
 var textArray = []
 var plotArray = []
@@ -12,9 +12,11 @@ ids.forEach(function(id){
 
 socket.on('update',function(message){
     const data = message.split(':');
-    for (int i=0; i<3; i++) {
-        textArray[i].innerHTML=data[i];
-        plotArray[i].src=`images/plot${i}.png?a=`+Math.random();
+    var i=0;
+    for (; i<3; i++) {
+        if(i!=0) textArray[i].innerHTML=data[i].substring(0, data[i].length - 2);
+        else textArray[i].innerHTML=data[i];
+        plotArray[i].src=`static/plots/plot${i}.png?a=`+Math.random();
     }
 });
 function update() {

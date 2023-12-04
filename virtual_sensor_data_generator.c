@@ -27,8 +27,28 @@ sudo cmake --build build --target install
 #include <MQTTClient.h>
 // #include <mqtt/MQTTClient.h>
 
+#define TIME_STRING_LENGTH 20
+
 #define MQTT_BROKER_ADDRESS "tcp://localhost:1883"
 #define MQTT_CLIENT_ID "temperature_sensor_client"
+
+char* get_current_time_string() {
+    time_t current_time;
+    struct tm *local_time;
+    static char time_str[TIME_STRING_LENGTH]; // Static buffer to hold the formatted time string
+
+    // Get the current time
+    current_time = time(NULL);
+
+    // Convert to local time
+    local_time = localtime(&current_time);
+
+    // Format the time as a string
+    strftime(time_str, TIME_STRING_LENGTH, "%Y-%m-%d %H:%M:%S", local_time);
+
+    // Return the formatted time string
+    return time_str;
+}
 
 void sendToMQTT(char *topic, const char *value)
 {
@@ -60,8 +80,6 @@ void sendToMQTT(char *topic, const char *value)
 int main()
 {
     srand(time(NULL));
-    // char senval[3][8];
-    char topics[3][12] = {"Temperature", "Humidity", "CO2"};
 
     int pipefd[2];
     pid_t child_pid;
@@ -89,6 +107,11 @@ int main()
 
         // Read from the pipe
         char receivedString[100];
+
+        char senval[3][8];
+        char topics[3][12] = {"Temperature", "Humidity", "CO2"};
+        char json_data[100];
+
         while (1)
         {
             if (read(pipefd[0], receivedString, sizeof(receivedString)) > 0)
@@ -106,15 +129,17 @@ int main()
                 while (token != NULL)
                 {
                     strcpy(senval[i], token);
-                    printf("%s\n", token);
+                    // printf("%s\n", token);
                     token = strtok(NULL, ":");
                     i++;
                 }
 
+                char* current_time_str = get_current_time_string();
                 for (int i = 0; i < 3; i++)
                 {
                     // Send to MQTT
-                    sendToMQTT(topics[i], senval[i]);
+                    sprintf(json_data, "{\"time\":\"%s\",\"reading\":\"%s\"}", current_time_str, senval[i]);
+                    sendToMQTT(topics[i], json_data);
                 }
             }
         }
