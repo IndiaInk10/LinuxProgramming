@@ -9,8 +9,6 @@ sensor_type=["Temperature", "Humidity", "CO2"]
 symbol=["°C","%","ppm"]
 
 def on_message(client, userdata, message):
-    global sensor_type
-    global symbol
     try:
         payload = message.payload.decode()
         data = eval(payload)

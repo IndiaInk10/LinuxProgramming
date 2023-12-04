@@ -19,8 +19,3 @@ socket.on('update',function(message){
         plotArray[i].src=`static/plots/plot${i}.png?a=`+Math.random();
     }
 });
-function update() {
-    socket.emit('get_data'); 
-}
-
-setInterval(update, 1000);
