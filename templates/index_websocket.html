@@ -2,20 +2,52 @@
 <html>
 
 <head>
-    <title>MQTT to Websocket</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <link rel="stylesheet" href="index_websocket.css">
+    <title>Smart Farm Monitoring</title>
 </head>
 
 <body>
-    <h1>MQTT to Websocket Example</h1>
-    <div id="output"></div>
-
+    <header>
+        <h1>Smart Farm Monitoring : the crop is Tomatoes 🍅</h1>
+    </header>
+    <main>
+        <section class="upper">
+            <article class="sensor">
+                <div id="temp_symbol" class="material-symbols-rounded">
+                    device_thermostat
+                </div>
+                <div>
+                    <span id="tempText" class="value">36.5</span><span>°C</span>
+                </div>
+            </article>
+            <article class="sensor">
+                <div id="humid_symbol" class="material-symbols-rounded">
+                    dew_point
+                </div>
+                <div>
+                    <span id="humidText" class="value">70</span><span>%</span>
+                </div>
+            </article>
+            <article class="sensor">
+                <div id="co2_symbol" class="material-symbols-rounded">
+                    co2
+                </div>
+                <div>
+                    <span id="co2Text" class="value">415</span><span>ppm</span>
+                </div>
+            </article>
+        </section>
+        <section class="lower">
+            <article class="plot">
+                <img id="tempPlot" src="loading_plant.gif">
+                <img id="humidPlot" src="loading_plant.gif">
+                <img id="co2Plot" src="loading_plant.gif">
+            </article>
+        </section>
+    </main>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.js"></script>
-    <script type="text/javascript">
-        const socket = io.connect('http://localhost:5000');
-        socket.on('message', function (message) {
-            document.getElementById('output').innerHTML += '<p>' + message + '</p>';
-        });
-    </script>
+    <script src="index_websocket.js"></script>
 </body>
 
 </html>
